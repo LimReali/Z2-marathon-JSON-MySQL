@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Регистрация на марафон скандинавской ходьбы</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            max-width: 750px;
+            margin: 10px auto;
+            padding: 10px;
+        }
+        h1 {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.4s ease, background-color 0.4s ease;
+        }
+        input.invalid,
+        select.invalid {
+            border-color: red;
+            background-color: #ffe6e6;
+        }
+        input:hover,
+        select:hover,
+        input:focus,
+        select:focus {
+            border-color: #72027c;
+            background-color: #fff5ff;
+            box-shadow: 0 0 8px rgba(75, 0, 75, 0.219);
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.85em;
+            margin-top: 2px;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: opacity 0.6s ease, max-height 0.6s ease;
+        }
+        .error-message.active {
+            opacity: 1;
+            max-height: 100px;
+        }
+        .form-container {
+            border: 2px solid #333;
+            padding: 40px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .button-container button {
+            background-color: #63066b;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button-container button:hover {
+            background-color: #000000;
+        }
+        #responseMessage {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Регистрация на марафон скандинавской ходьбы</h1>
+    <div class="form-container">
+        <form id="registrationForm" novalidate>
+            <label for="name">Имя участника:
+                <input type="text" id="name" name="name" />
+                <div class="error-message" id="error-name">Пожалуйста, введите имя.</div>
+            </label>
+            <label for="gender">Пол:
+                <select id="gender" name="gender">
+                    <option value="">-- выберите пол --</option>
+                    <option value="Мужской">Мужской</option>
+                    <option value="Женский">Женский</option>
+                </select>
+                <div class="error-message" id="error-gender">Пожалуйста, выберите пол.</div>
+            </label>
+            <label for="age">Возраст на момент регистрации:
+                <input type="number" id="age" name="age" min="1" />
+                <div class="error-message" id="error-age">Возраст должен быть положительным числом.</div>
+            </label>
+            <label for="experience">Стаж спортсмена (лет):
+                <input type="number" id="experience" name="experience" min="0" />
+                <div class="error-message" id="error-experience">Стаж должен быть неотрицательным числом.</div>
+            </label>
+            <label for="city">Город проживания:
+                <input type="text" id="city" name="city" />
+                <div class="error-message" id="error-city">Город должен содержать только кириллические символы.</div>
+            </label>
+            <div class="button-container">
+                <button type="submit">Зарегистрироваться</button>
+            </div>
+        </form>
+        <div id="responseMessage"></div>
+    </div>
+    <script>
+        const form = document.getElementById('registrationForm');
+        const responseMessage = document.getElementById('responseMessage'); // Элемент для отображения ответов сервера (успешная регистрация или ошибка)
+        function validateField(field) {         // Функция проверки валидности 
+            const value = field.value.trim();
+            let valid = true;
+            let message = '';
+            switch (field.name) {
+                case 'name':
+                    if (value === '') {
+                        valid = false;
+                    }
+                    break;
+                case 'gender':
+                    if (value === '') {
+                        valid = false;
+                    }
+                    break;
+                case 'age':
+                    if (!/^\d+$/.test(value) || +value < 1) {
+                        valid = false;
+                    }
+                    break;
+                case 'experience':
+                    if (!/^\d+$/.test(value) || +value < 0) {
+                        valid = false;
+                    }
+                    break;
+                case 'city':
+                    if (!/^[А-Яа-яЁё\s-]+$/.test(value)) {
+                        valid = false;
+                    }
+                    break;
+            }
+            if (!valid) {        // Если поле невалидно, добавляем стили для подсветки ошибки и само сообщение
+                field.classList.add('invalid');
+                document.getElementById('error-' + field.name).classList.add('active');
+            } else {
+                field.classList.remove('invalid');
+                document.getElementById('error-' + field.name).classList.remove('active');
+            }
+            return valid;
+        }
+        Array.from(form.elements).forEach(field => {  //Для CSS
+            if (field.tagName === 'INPUT' || field.tagName === 'SELECT') {
+                field.addEventListener('blur', () => validateField(field));
+                field.addEventListener('input', () => validateField(field));
+            }
+        });
+        form.addEventListener('submit', async function (event) {  // Отправка и валидация формы регистрации
+            event.preventDefault();
+            let isFormValid = true;
+            Array.from(form.elements).forEach(field => {
+                if (field.tagName === 'INPUT' || field.tagName === 'SELECT') {
+                    const valid = validateField(field);
+                    if (!valid) isFormValid = false;
+                }
+            });
+            if (!isFormValid) {
+                return;
+            }
+            const formData = {    // Формирование данных для отправки
+                name: form.name.value.trim(),
+                gender: form.gender.value,
+                age: Number(form.age.value),
+                experience: Number(form.experience.value),
+                city: form.city.value.trim()
+            };
+            try {
+                const response = await fetch('register.php', {  // Отправляем POST-запрос с JSON на сервер
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    form.reset();
+                    responseMessage.style.color = "green";
+                    responseMessage.textContent = "Регистрация успешно добавлена!";
+                } else {
+                    responseMessage.style.color = "red";
+                    responseMessage.textContent = "Ошибка: " + (result.error || 'неизвестная ошибка');
+                }
+            } catch (error) {
+                responseMessage.style.color = "red";
+                responseMessage.textContent = "Ошибка сети: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
